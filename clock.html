@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Horloge en temps réel</title>
+		<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+		<script type="text/javascript">
+			//Au chargement de la page on lance automatiquement l'horloge
+			$(window).load(function() {
+				setHorl();
+				horl();
+			});
+			
+			//L'horloge est actualisée chaque seconde pour s'afficher en temps réel
+			function horl(){
+				setInterval(setHorl, 1000);
+			}
+			
+			//Ici le setInterval actualisé chaque seconde affiche l'horloge en temps réel
+			function setHorl(){
+				var horl = new Date();
+				
+				var h = horl.getHours();
+				var m = horl.getMinutes();
+				var s = horl.getSeconds();
+				
+				$('#horloge').text(chiffre(h)+" : "+chiffre(m)+" : "+chiffre(s));
+			}
+		
+		
+			//Quatre variables sont initialisées. Les deux premières sont des booléens qui permettent de faire fonctionner des conditions dans le script. Les deux autres permettent d'initialiser et d'interrompre la répétition des fonctions qui feront fonctionner le chrono en temps réel
+			var chr = true;
+			var clignoter = true;
+			var top_chrono;
+			var pause;
+			
+			//On initialise les valeurs des milisecondes, secondes et minutes
+			var milisecondes = 0;
+			var secondes = 0;
+			var minutes = 0;
+			
+			//Fonction pour changer la valeur d'un élément notamment pour afficher ou cacher un bouton
+			function val(sel, val){
+				$(sel).val(val);
+			}
+			
+			//Fonction pour changer le css d'un élément notamment pour afficher le chrono
+			function css(sel, cs1, cs2){
+				$(sel).css(cs1, cs2);
+			}
+			
+			//Fonction pour afficher le chrono en "00 : 00 : 00"
+			function chiffre(nbr){
+				if(nbr < 10){
+					return "0"+nbr;
+				}
+				else {
+					return nbr;
+				}
+			}
+			
+			//Lancement du chrono : ici c'est la logique du chrono
+			function chrono(){
+				if(chr){
+					//On fait arrêter le setInterval de la variable pause dans le cas où l'on a cliqué précédemment sur pause sinon le clignotement du chrono continu quand on veut reprendre le chrono
+					//La variable chr est égale à zéro au-dessus, ce qui indique au script de lancer le chrono ou alors de le faire continuer si on a cliqué précédemment sur pause
+					clearInterval(pause);
+					top_chrono = setInterval(setHorloge, 10);
+					
+					//Comme on a cliqué sur le bouton "Lancer" pour déclancher le chrono on change la valeur du même bouton par "Pause" pour mettre le chrono en pause si on le souhaite
+					//On affiche explicitement le chrono pour annuler l'effet du clignotement en temps de pause si on a cliqué précédemment sur "Pause" sinon l'effet de clignotement continue après avoir cliqué sur "Pause"
+					//Et on cache le bouton "Réinitialiser" qui ne peut être affiché qu'après avoir cliqué sur "Pause"
+					val("#lancer","Pause");
+					css("#affichage","visibility", "visible");
+					css("#reinit","display", "none");
+					chr = false;
+				}
+				else{
+					//On a mit le chrono en pause grâce à clearInterval qui arrête la fonction setInterval
+					//Ensuite la variable pause déclenche une fonction qui fait clignoter le chrono mis en pause
+					clearInterval(top_chrono);
+					pause = setInterval(setPause, 500);
+					
+					//Comme on a cliqué sur le bouton "Pause" on change le nom du même bouton par "Lancer" afin de poursuivre le chrono si on veut
+					//Ensuite on fait apparaître le bouton "Réinitialiser" pour remettre le chrono à zéro si on le souhaite //Ensuite on change la valeur de la variable chr par 0 qui permettra au script quand on clique sur le bouton "Lancer" de reconnaître que l'on veut continuer le chrono là où on l'a mis en pause
+					val("#lancer","Lancer");
+					css("#reinit","display", "block");
+					chr = true;
+				}
+			}
+			
+			//Mise en pause du chrono
+			function setPause(){
+				//Premier cycle : on chache le chrono. La variable clignoter permet de savoir si on doit afficher ou cacher le chrono en pause et en alternant sa valeur entre 0 et 1 on peut faire clignoter l'affichage
+				if(clignoter){ 
+					css("#affichage","visibility", "hidden");
+					clignoter = false;
+				}
+				//Deuxième cycle : on l'affiche
+				else{
+					css("#affichage","visibility", "visible");
+					clignoter = true;
+				}
+			}
+			
+			//Lancement du chrono : ici c'est le traitement du chrono
+			function setHorloge(){
+				//Les milisecondes sont le moteur du chronomètre
+				if(milisecondes == 100){
+					//Quand les 100 milisecondes sont atteints on remet les milisecondes à zéro et on augmente le chrono de une seconde
+					milisecondes = 0;
+					secondes++;
+				}
+				
+				if(secondes == 60){
+					//Quand les 60 sec sont atteints on remet les secondes à zéro et on augmente le chrono de une minute
+					secondes = 0;
+					minutes++;
+				}
+				
+				//On affiche le chrono en temps réel et on augmente de une milisecondes
+				$("#affichage").text(chiffre(minutes)+ " : "+chiffre(secondes)+ " : "+chiffre(milisecondes));
+				milisecondes++;
+			}
+			
+			//Réinitialisation du chrono
+			function reinit(){
+				//On arrête tout d'abord la fonction de mise en pause que l'on a activé précédemment, sinon on aura encore le clignotement du chrono spécifique à la mise en pause
+				clearInterval(pause);
+				
+				//On remet la variable chr à zéro pour que plus tard le script reconnaisse que l'on cliqué sur le bouton "Lancer" et non sur "Pause" (pour rappel ces deux actions partagent le même bouton)
+				//On remet à zéro les minutes, secondes et milisecondes, sinon lors du prochain lancement du chrono on verra s'afficher la valeur du chrono mis en pause dernièrement
+				chr = true;
+				minutes = 0;
+				secondes = 0;
+				milisecondes = 0;
+				
+				//On en profite pour afficher esthétiquement le chrono inactif comme ceci "00 : 00 : 00" grâce à la fonction chiff()
+				$("#affichage").text(chiffre(minutes)+ " : "+chiffre(secondes)+ " : "+chiffre(milisecondes));
+				
+				//Ensuite on change la valeur du bouton "Pause" (pour rappel quand on clique sur "Pause" s'affiche le bouton "Réinitialiser") pour "Lancer" qui permettra à l'utilisateur ç la prochaine action de relancer le chrono à zéro
+				//Ensuite on affiche explicitement la visibilité de l'affichage du chrono, sinon il continuera d'être soumis aux conditions de mise en pause qui fait cacher et apparaître le chrono
+				//Et ensuite on fait disparaître le bouton "Réinitialiser" inutile pour la prochaine action qui lancera le chrono
+				val("#lancer","Lancer");
+				css("#affichage","visibility", "visible");
+				css("#reinit","display", "none");
+			}			
+		</script>
+		<style type="text/css">
+			ul li{
+				display:inline;
+				text-decoration:none;
+			}
+			input{
+				margin-bottom:5px;
+			}
+		</style>
+		
+	</head>
+		
+	<body>
+		<u><h1>Heure actuelle et chronomètre :</h1></u>
+		<div>
+			<b><h1 id="horloge"></h1></b>
+		</div>
+		<div>
+			<b><h1 id="affichage">00 : 00 : 00</h1></b>
+			<ul>
+				<li><input id="lancer" type="button" value="Lancer" onclick="chrono()"/></li>
+				<li><input id="reinit"style="display:none" type="button" value="Réinitialiser" onclick="reinit()"/></li>
+			</ul>
+		</div>
+	</body>
+</html>
