@@ -1,2 +1,2 @@
-# oclock
-Real time oclock and chronometer using javascript
+# Clock
+Real time clock and chronometer using javascript
